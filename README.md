@@ -1,5 +1,5 @@
 # shittyDinoRun
 
-to run:
-  $cd shittyDinoRun
+to run:\n
+  $cd shittyDinoRun\n
   $source ./run
