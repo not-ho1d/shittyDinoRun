@@ -1,9 +1,9 @@
 # shittyDinoRun  
 
-##Installation
+## Installation
 
-1.git clone https://github.com/shittyDinoRun  
-2.cd shittyDinoRun
-3.source ./run.sh
+- git clone https://github.com/shittyDinoRun  
+- cd shittyDinoRun
+- source ./run.sh
 
 
