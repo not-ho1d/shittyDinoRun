@@ -236,18 +236,18 @@ def mainLoop():
                 obstacleNearFlag = True
 
             if(checkForCollision()):
-                time.sleep(1)
+                time.sleep(0.3)
                 break
 
             if(clock > 8):
-                if(random.randint(0,10) == 3):
+                if(random.randint(0,6) == 3):
                     addObstacle()
                     clock = 0
 
             moveObstacles()
             clock+=1
             updateScore()
-            time.sleep(0.2)
+            time.sleep(0.15)
 
     except KeyboardInterrupt:
         pass
