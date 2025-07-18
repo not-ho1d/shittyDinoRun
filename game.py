@@ -32,19 +32,17 @@ screenHeight = winSize.lines
 floorRow = screenHeight - 1
 floorIndicator = "󠁩󠁩󠁩_"
 obstacleShape = "▒"
-
 #added floor just for making it look good
 actualFloor = "▒"
-
 #json config
 config = ""
-
 score = 0
 exitFlag = False
-
 #used to store copy of the obstacles to check for collison
 collisionRow = []
-
+collision = False
+speed = 0.2
+speedIncreasePoint = 500
 
 class PlayerPosition:
     def __init__(self,row,column):
@@ -64,7 +62,7 @@ class PositionManager:
         self.position_list[column] = newChar
 
 
-player = PlayerPosition(10,18)
+player = PlayerPosition(0,0)
 
 def log(message):
     with open ("log.txt","a") as f:
@@ -85,8 +83,20 @@ def displayHighScore():
     rows[floorRow - 5].changeCharacter(Color.red(f"'q':quit"),1)
     rows[floorRow - 5].changeCharacter(Color.yellow(f"high score: {str(config['game_details']['highscore'])}"),int(screenWidth/2)-16)
 
-def setHighScore(newScore):
-    pass
+
+def initializeRandomObstacles(obstacleLimit,minPosition,listLength):
+    tempList = ["_" for i in range(listLength)]
+    possibleObstacleCount = int((listLength - minPosition)/obstacleLimit)
+
+    start = minPosition+7
+    while ((start + obstacleLimit) < listLength):
+        randomPosition = random.randint(start,start+obstacleLimit)
+        tempList[randomPosition] = obstacleShape
+        start += (obstacleLimit * 2)
+
+    log(f"obsLim:{obstacleLimit}:minPosition{minPosition}:listLength:{listLength}\n {''.join(tempList)}")
+    return tempList
+
 #set up the screen and initialize the lists used to represent the screen
 def initializeRowsAndCharacter():
     global collisionRow
@@ -98,7 +108,8 @@ def initializeRowsAndCharacter():
         row = PositionManager([" "]+[" " for i in range(screenWidth - 2)]+[" "])
         rows.append(row)
     #fill in the floor
-    floorRow = PositionManager([floorIndicator for i in range(screenWidth)])
+    #floorRow = PositionManager([floorIndicator for i in range(screenWidth)])
+    floorRow = PositionManager(initializeRandomObstacles(5,10,screenWidth))
     #copy the ground floor (where obstacles collide with player) to detect collsion
     collisionRow = list(floorRow.position_list)
     rows.append(floorRow)
@@ -109,6 +120,7 @@ def initializeRowsAndCharacter():
     player.row = screenHeight-1
     player.column = 10
     rows[player.row].changeCharacter(playerCharacter,player.column)
+
 
     #logCollision("start:")
 
@@ -129,14 +141,18 @@ def displayAt():
 
 
 def jumpAnimation(jumpNo):
-    #logCollision("before jump :")
+    global collisionRow
+
 
     #when jumping,player character is put in one row above the current row .so we have to delete player character from previous row. otherwise there would be multiple player characters on all the rows in jumping area
 
     #in first jump we have to restore the floor where the player was standing,since it's now visible again
 
     if jumpNo == 0:
-        rows[player.row].changeCharacter(floorIndicator,player.column)
+        if collisionRow[player.column] == obstacleShape:
+            rows[player.row].changeCharacter(obstacleShape,player.column)
+        else:
+            rows[player.row].changeCharacter(floorIndicator,player.column)
         collisionRow.append(floorIndicator)
         rows[player.row].position_list.append(floorIndicator)
 
@@ -145,7 +161,6 @@ def jumpAnimation(jumpNo):
         rows[player.row].changeCharacter(" ",player.column)
     player.jump()
     rows[player.row].changeCharacter(playerCharacter,player.column)
-    #logCollision("after jump :")
 
 def gravityAnimation(duckNo):
     global collisionRow
@@ -162,14 +177,13 @@ def gravityAnimation(duckNo):
 
 def checkForCollision():
     global collisionRow,floorRow
-
     if(player.row == floorRow and collisionRow[player.column] == obstacleShape):
         return True
     return False
 
 
 def listenInput():
-    global exitFlag
+    global exitFlag,collisionRow,speed
 
     while True:
         key = readchar.readkey()
@@ -177,12 +191,13 @@ def listenInput():
             for i in range(3):
                 jumpAnimation(i)
                 displayAt()
-                time.sleep(0.20)
+                time.sleep(speed+0.02)
             moveObstacles()
             for i in range(3):
                 gravityAnimation(i)
                 displayAt()
-                time.sleep(0.17)
+                if i < 2:
+                    time.sleep(speed-0.015)
         elif key == "q":
             exitFlag = True
             sys.exit(1)
@@ -216,7 +231,7 @@ def updateScore():
 
 def mainLoop():
 
-    global exitFlag
+    global exitFlag,speed,speedIncreasePoint,collision
 
     createScreen()
     thread = threading.Thread(target = listenInput,daemon = True)
@@ -236,10 +251,14 @@ def mainLoop():
                 obstacleNearFlag = True
 
             if(checkForCollision()):
-                time.sleep(0.3)
+                time.sleep(0.1)
                 break
 
-            if(clock > 8):
+            if(score>speedIncreasePoint):
+                speed-=0.01
+                speedIncreasePoint+=speedIncreasePoint
+
+            if(clock > 5):
                 if(random.randint(0,6) == 3):
                     addObstacle()
                     clock = 0
@@ -247,7 +266,7 @@ def mainLoop():
             moveObstacles()
             clock+=1
             updateScore()
-            time.sleep(0.15)
+            time.sleep(speed)
 
     except KeyboardInterrupt:
         pass
