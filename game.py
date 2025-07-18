@@ -6,6 +6,24 @@ import random
 import sys
 import json
 
+
+class Color:
+    @staticmethod
+    def red(text):
+        return f'\033[31m{text}\033[0m'
+
+    @staticmethod
+    def green(text):
+        return f'\033[32m{text}\033[0m'
+
+    @staticmethod
+    def yellow(text):
+        return f'\033[34m{text}\033[0m'
+
+    @staticmethod
+    def blue(text):
+        return f"\033[36m{text}\033[0m"
+
 winSize = os.get_terminal_size()
 playerCharacter = "o"
 rows = []
@@ -64,7 +82,8 @@ def getConfig():
 
 def displayHighScore():
     global config
-    rows[floorRow - 5].changeCharacter(f"high score: {str(config['game_details']['highscore'])}",int(screenWidth/2)-8)
+    rows[floorRow - 5].changeCharacter(Color.red(f"'q':quit"),1)
+    rows[floorRow - 5].changeCharacter(Color.yellow(f"high score: {str(config['game_details']['highscore'])}"),int(screenWidth/2)-16)
 
 def setHighScore(newScore):
     pass
@@ -154,7 +173,7 @@ def listenInput():
 
     while True:
         key = readchar.readkey()
-        if key == "w":
+        if key == "w" or key == readchar.key.UP:
             for i in range(3):
                 jumpAnimation(i)
                 displayAt()
@@ -192,7 +211,7 @@ def moveObstacles():
 def updateScore():
     global score
     score+=5
-    rows[floorRow - 4].changeCharacter(str(score),int(screenWidth/2)-2)
+    rows[floorRow - 4].changeCharacter(Color.green(str(score)),int(screenWidth/2)-2)
 
 
 def mainLoop():
