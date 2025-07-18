@@ -41,7 +41,7 @@ exitFlag = False
 #used to store copy of the obstacles to check for collison
 collisionRow = []
 collision = False
-speed = 0.2
+speed = 0.16
 speedIncreasePoint = 500
 
 class PlayerPosition:
@@ -94,7 +94,7 @@ def initializeRandomObstacles(obstacleLimit,minPosition,listLength):
         tempList[randomPosition] = obstacleShape
         start += (obstacleLimit * 2)
 
-    log(f"obsLim:{obstacleLimit}:minPosition{minPosition}:listLength:{listLength}\n {''.join(tempList)}")
+    #log(f"obsLim:{obstacleLimit}:minPosition{minPosition}:listLength:{listLength}\n {''.join(tempList)}")
     return tempList
 
 #set up the screen and initialize the lists used to represent the screen
@@ -188,16 +188,16 @@ def listenInput():
     while True:
         key = readchar.readkey()
         if key == "w" or key == readchar.key.UP:
-            for i in range(3):
+            for i in range(2):
                 jumpAnimation(i)
                 displayAt()
                 time.sleep(speed+0.02)
             moveObstacles()
-            for i in range(3):
+            for i in range(2):
                 gravityAnimation(i)
                 displayAt()
-                if i < 2:
-                    time.sleep(speed-0.015)
+                if i < 1:
+                    time.sleep(speed-0.01)
         elif key == "q":
             exitFlag = True
             sys.exit(1)
@@ -207,7 +207,6 @@ def addObstacle():
     global collisionRow
     rows[floorRow].changeCharacter(obstacleShape,screenWidth-1)
     collisionRow[screenWidth-1]=obstacleShape
-    #logCollision("addob:")
 
 
 def moveObstacles():
@@ -225,17 +224,24 @@ def moveObstacles():
 
 def updateScore():
     global score
-    score+=5
     rows[floorRow - 4].changeCharacter(Color.green(str(score)),int(screenWidth/2)-2)
 
+def scoreUpdate():
+    global score
+    while True:
+        score+=5
+        time.sleep(0.2)
 
 def mainLoop():
 
-    global exitFlag,speed,speedIncreasePoint,collision
+    global exitFlag,speed,speedIncreasePoint,collision,timer
 
     createScreen()
     thread = threading.Thread(target = listenInput,daemon = True)
+    scoreThread = threading.Thread(target = scoreUpdate,daemon = True)
+    scoreThread.start()
     thread.start()
+
     initializeRowsAndCharacter()
     try:
         clock = 10
@@ -255,7 +261,7 @@ def mainLoop():
                 break
 
             if(score>speedIncreasePoint):
-                speed-=0.01
+                speed-=0.02
                 speedIncreasePoint+=speedIncreasePoint
 
             if(clock > 5):
@@ -267,7 +273,6 @@ def mainLoop():
             clock+=1
             updateScore()
             time.sleep(speed)
-
     except KeyboardInterrupt:
         pass
 
