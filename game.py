@@ -4,18 +4,22 @@ import threading
 import time
 import random
 import sys
+import json
 
-
+winSize = os.get_terminal_size()
 playerCharacter = "o"
 rows = []
-screenWidth = 50
-screenHeight = 20
-floorRow = 19
+screenWidth = winSize.columns
+screenHeight = winSize.lines
+floorRow = screenHeight - 1
 floorIndicator = "󠁩󠁩󠁩_"
 obstacleShape = "▒"
 
 #added floor just for making it look good
 actualFloor = "▒"
+
+#json config
+config = ""
 
 score = 0
 exitFlag = False
@@ -42,7 +46,7 @@ class PositionManager:
         self.position_list[column] = newChar
 
 
-player = PlayerPosition(10,5)
+player = PlayerPosition(10,18)
 
 def log(message):
     with open ("log.txt","a") as f:
@@ -53,9 +57,22 @@ def logCollision(message):
 
     log(f"{message}\n{''.join(collisionRow)}\n{''.join(rows[floorRow].position_list)}\n")
 
+def getConfig():
+    global config
+    with open("config.json","r") as config:
+        config = json.load(config)
+
+def displayHighScore():
+    global config
+    rows[floorRow - 5].changeCharacter(f"high score: {str(config['game_details']['highscore'])}",int(screenWidth/2)-8)
+
+def setHighScore(newScore):
+    pass
 #set up the screen and initialize the lists used to represent the screen
 def initializeRowsAndCharacter():
     global collisionRow
+
+    getConfig()
 
     #make list with " " elements to fill terminal screen
     for i in range(screenHeight - 1):
@@ -70,12 +87,13 @@ def initializeRowsAndCharacter():
     #fill in the decoration floor
     rows.append(PositionManager([actualFloor for i in range(screenWidth+3)]))
 
-    player.row = 19
+    player.row = screenHeight-1
     player.column = 10
     rows[player.row].changeCharacter(playerCharacter,player.column)
 
     #logCollision("start:")
 
+    displayHighScore()
 
 def createScreen():
     os.system("stty -echo")
@@ -88,7 +106,7 @@ def returnScreenToNormal():
 #display each lists at each row by converting them into string
 def displayAt():
     for row in rows:
-        print("".join(row.position_list[:screenWidth-2]))
+        print(" "+"".join(row.position_list[:screenWidth-2]))
 
 
 def jumpAnimation(jumpNo):
@@ -174,7 +192,9 @@ def moveObstacles():
 def updateScore():
     global score
     score+=5
-    rows[floorRow - 4].changeCharacter(str(score),23)
+    rows[floorRow - 4].changeCharacter(str(score),int(screenWidth/2)-2)
+
+
 def mainLoop():
 
     global exitFlag
@@ -196,10 +216,6 @@ def mainLoop():
             if(rows[floorRow].position_list[player.column + 3] == obstacleShape):
                 obstacleNearFlag = True
 
-            #with open("log.txt","a") as file:
-                #file.write(f'{rows[floorRow].position_list[player.column-3:player.column+3]}\n')
-                #file.write(f"{len(rows[floorRow].position_list)}\n")
-
             if(checkForCollision()):
                 time.sleep(1)
                 break
@@ -219,6 +235,14 @@ def mainLoop():
 
     finally:
         returnScreenToNormal()
-        print(f"you scored {score}")
+
+        if(score > config["game_details"]["highscore"]):
+
+            config["game_details"]["highscore"] = score
+            with open("config.json","w") as orginalConf:
+                json.dump(config,orginalConf)
+            print(f"congrats! ... you got the new highscore of {score}")
+        else:
+            print(f"you scored: {score} , highscore:{config['game_details']['highscore']}")
 if __name__ == "__main__":
     mainLoop()
