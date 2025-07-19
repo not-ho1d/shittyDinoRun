@@ -32,6 +32,7 @@ screenHeight = winSize.lines
 floorRow = screenHeight - 1
 floorIndicator = "󠁩󠁩󠁩_"
 obstacleShape = "▒"
+groundObstacleStatus = {"generated":True,"countSinceGenerated":0}
 #added floor just for making it look good
 actualFloor = "▒"
 #json config
@@ -42,7 +43,7 @@ exitFlag = False
 collisionRow = []
 collision = False
 speed = 0.16
-speedIncreasePoint = 500
+speedIncreasePoint = 100
 
 class PlayerPosition:
     def __init__(self,row,column):
@@ -204,9 +205,16 @@ def listenInput():
 
 
 def addObstacle():
-    global collisionRow
-    rows[floorRow].changeCharacter(obstacleShape,screenWidth-1)
-    collisionRow[screenWidth-1]=obstacleShape
+    global collisionRow,groundObstacleStatus
+
+    if(groundObstacleStatus["generated"] == True):
+        groundObstacleStatus["countSinceGenerated"]+=1
+
+    if(groundObstacleStatus["countSinceGenerated"]>3):
+        if(random.randint(0,1)):
+            rows[floorRow].changeCharacter(obstacleShape,screenWidth-1)
+            collisionRow[screenWidth-1]=obstacleShape
+            groundObstacleStatus["countSinceGenerated"]=0
 
 
 def moveObstacles():
@@ -260,17 +268,13 @@ def mainLoop():
                 time.sleep(0.1)
                 break
 
-            if(score>speedIncreasePoint):
-                speed-=0.02
+            if(score>speedIncreasePoint and score < 1600):
+                speed-=0.01
                 speedIncreasePoint+=speedIncreasePoint
 
-            if(clock > 5):
-                if(random.randint(0,6) == 3):
-                    addObstacle()
-                    clock = 0
+            addObstacle()
 
             moveObstacles()
-            clock+=1
             updateScore()
             time.sleep(speed)
     except KeyboardInterrupt:
