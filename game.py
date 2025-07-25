@@ -133,7 +133,7 @@ def createScreen():
 
 def returnScreenToNormal():
     print("\033[?25h\033[2J\033[H")
-    os.system("stty -echo")
+    os.system("stty echo")
 
 #display each lists at each row by converting them into string
 def displayAt():
